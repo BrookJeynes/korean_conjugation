@@ -1,3 +1,11 @@
+/* Many of the calculations used within this file can be referenced back to
+ * http://www.kfunigraz.ac.at/~katzer/korean_hangul_unicode.html 
+ * 
+ * Unfortunately, this site is now dead. I've gone ahead and archived a version
+ * of it at ./resources/korean_hangul_syllabary_in_unicode_archive.html for
+ * future reference.
+*/
+
 export const hangulUnicodeRange = {
     lower: 0xAC00,
     upper: 0xD7A3,
