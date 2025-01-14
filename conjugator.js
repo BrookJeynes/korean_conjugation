@@ -1,10 +1,9 @@
 import { Geulja, findVowelToAppend, getLead, getPadchim, getVowel, join } from "./hangul";
-import { isHIrregular, isDIrregular, isLIrregular, isPIrregular, isSIrregular, isLEuIrregular } from "./irregulars.js"
+import { isDIrregular, isHIrregular, isLEuIrregular, isLIrregular, isPIrregular, isSIrregular } from "./irregulars.js";
 import { merge_rules } from "./merge_rules";
 
 export class Conjugation {
-    tenses = {};
-    tense_order = [];
+    tense_rules = [];
     reasons = [];
 
     constructor() {
