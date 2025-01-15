@@ -1,4 +1,5 @@
-import { getPadchim, matchGeulja } from "./hangul.js";
+import { getPadchim, matchGeulja } from "./hangul.ts";
+import { Infinitive } from "./conjugator.ts";
 
 const not_p_irregular = { "털썩이잡": true, "넘겨잡": true, "우접": true, "입": true, "맞접": true, "문잡": true, "다잡": true, "까뒤집": true, "배좁": true, "목잡": true, "끄집": true, "잡": true, "옴켜잡": true, "검잡": true, "되순라잡": true, "내씹": true, "모집": true, "따잡": true, "엇잡": true, "까집": true, "겹집": true, "줄통뽑": true, "버르집": true, "지르잡": true, "추켜잡": true, "업": true, "되술래잡": true, "되접": true, "좁디좁": true, "더위잡": true, "말씹": true, "내뽑": true, "집": true, "걸머잡": true, "휘어잡": true, "꿰입": true, "황잡": true, "에굽": true, "내굽": true, "따라잡": true, "맞뒤집": true, "둘러업": true, "늘잡": true, "끄잡": true, "우그려잡": true, "어줍": true, "언걸입": true, "들이곱": true, "껴잡": true, "곱 접": true, "훔켜잡": true, "늦추잡": true, "갈아입": true, "친좁": true, "희짜뽑": true, "마음잡": true, "개미잡": true, "옴씹": true, "치잡": true, "그러잡": true, "움켜잡": true, "씹": true, "비집": true, "꼽": true, "살잡": true, "죄입": true, "졸잡": true, "가려잡": true, "뽑": true, "걷어잡": true, "헐잡": true, "돌라입": true, "덧잡": true, "얕잡": true, "낫잡": true, "부여잡": true, "맞붙잡": true, "걸입": true, "주름잡": true, "걷어입": true, "빌미잡": true, "개잡": true, "겉잡": true, "안쫑잡": true, "좁": true, "힘입": true, "걷잡": true, "바르집": true, "감씹": true, "짓씹": true, "손잡": true, "포집": true, "붙잡": true, "낮잡": true, "책잡": true, "곱잡": true, "흉잡": true, "뒤집": true, "땡잡": true, "어림잡": true, "덧껴입": true, "수줍": true, "뒤잡": true, "꼬집": true, "예굽": true, "덮쳐잡": true, "헛잡": true, "되씹": true, "낮추잡": true, "날파람잡": true, "틀어잡": true, "헤집": true, "남의달잡": true, "바로잡": true, "흠잡": true, "파잡": true, "얼추잡": true, "손꼽": true, "접": true, "차려입": true, "골라잡": true, "거머잡": true, "후려잡": true, "머줍": true, "넉장뽑": true, "사로잡": true, "덧입": true, "껴입": true, "얼입": true, "우집": true, "설잡": true, "늦잡": true, "비좁": true, "고르잡": true, "때려잡": true, "떼집": true, "되잡": true, "홈켜잡": true, "내곱": true, "곱씹": true, "빼입": true, "들이굽": true, "새잡": true, "이르집": true, "떨쳐입": true };
 const not_s_irregular = { "내솟": true, "빗": true, "드솟": true, "비웃": true, "뺏": true, "샘솟": true, "벗": true, "들이웃": true, "솟": true, "되뺏": true, "빼앗": true, "밧": true, "애긋": true, "짜드라웃": true, "어그솟": true, "들솟": true, "씻": true, "빨가벗": true, "깃": true, "벌거벗": true, "엇": true, "되빼앗": true, "웃": true, "앗": true, "헐벗": true, "용솟": true, "덧솟": true, "발가벗": true, "뻘거벗": true, "날솟": true, "치솟": true };
@@ -7,37 +8,37 @@ const not_h_irregular = { "들이좋": true, "터놓": true, "접어놓": true, 
 const not_l_euh_irregular = { "우러르": true, "따르": true, "붙따르": true, "늦치르": true, "다다르": true, "잇따르": true, "치르": true };
 const not_l_irregular = {};
 
-function afterLastSpace(infinitive) {
+function afterLastSpace(infinitive: Infinitive): string {
     const split = infinitive.split(" ");
     return split[split.length - 1];
 }
 
-export function isSIrregular(infinitive, regular = false) {
+export function isSIrregular(infinitive: Infinitive, regular: boolean = false): boolean {
     if (regular) return false;
     return matchGeulja(infinitive[infinitive.length - 1], undefined, undefined, "ᆺ") && (!not_s_irregular[afterLastSpace(infinitive)] || false);
 }
 
-export function isLIrregular(infinitive, regular = false) {
+export function isLIrregular(infinitive: Infinitive, regular: boolean = false): boolean {
     if (regular) return false;
     return matchGeulja(infinitive[infinitive.length - 1], undefined, undefined, "ᆯ") && (!not_l_irregular[afterLastSpace(infinitive)] || false);
 }
 
-export function isLEuIrregular(infinitive, regular = false) {
+export function isLEuIrregular(infinitive: Infinitive, regular: boolean = false): boolean {
     if (regular) return false;
     return matchGeulja(infinitive[infinitive.length - 1], "ᄅ", "ㅡ", null) && (!not_l_euh_irregular[afterLastSpace(infinitive)] || false);
 }
 
-export function isHIrregular(infinitive, regular = false) {
+export function isHIrregular(infinitive: Infinitive, regular: boolean = false): boolean {
     if (regular) return false;
-    return (getPadchim(infinitive[infinitive.length - 1]) == "ᇂ" || infinitive[infinitive.length - 1] == "러") && (!not_h_irregular[afterLastSpace(infinitive)] || false);
+    return (getPadchim(infinitive[infinitive.length - 1]) === "ᇂ" || infinitive[infinitive.length - 1] == "러") && (!not_h_irregular[afterLastSpace(infinitive)] || false);
 }
 
-export function isPIrregular(infinitive, regular = false) {
+export function isPIrregular(infinitive: Infinitive, regular: boolean = false): boolean {
     if (regular) return false;
     return matchGeulja(infinitive[infinitive.length - 1], undefined, undefined, "ᆸ") && (!not_p_irregular[afterLastSpace(infinitive)] || false);
 }
 
-export function isDIrregular(infinitive, regular = false) {
+export function isDIrregular(infinitive: Infinitive, regular: boolean = false): boolean {
     if (regular) return false;
     return matchGeulja(infinitive[infinitive.length - 1], undefined, undefined, "ᆮ") && (!not_d_irregular[afterLastSpace(infinitive)] || false);
 }

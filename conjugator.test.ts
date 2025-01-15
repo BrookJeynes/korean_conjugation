@@ -1,10 +1,10 @@
 import { beforeEach, describe, expect, test } from "bun:test";
-import { Conjugation } from "./conjugator.js";
+import { Conjugator } from "./conjugator.js";
 
-let conjugation;
+let conjugation: Conjugator;
 
 beforeEach(() => {
-    conjugation = new Conjugation();
+    conjugation = new Conjugator();
 });
 
 test("merge", () => {
@@ -32,7 +32,7 @@ describe("base", () => {
 
     test("future base", () => {
         expect(conjugation.futureBase("가다")).toBe("갈");
-        expect(conjugation.futureBase("가늘다").toString()).toBe("가늘");
+        expect(conjugation.futureBase("가늘다")).toBe("가늘");
         expect(conjugation.futureBase("좋다")).toBe("좋을");
         expect(conjugation.futureBase("뵙다")).toBe("뵐");
     });
@@ -185,7 +185,7 @@ describe("declarative present ", () => {
         expect(conjugation.declarativePresentFormalLow("걷다")).toBe("걷는다");
         expect(conjugation.declarativePresentFormalLow("짓다")).toBe("짓는다");
         expect(conjugation.declarativePresentFormalLow("부르다")).toBe("부른다");
-        expect(conjugation.declarativePresentFormalLow("살다").toString()).toBe("산다");
+        expect(conjugation.declarativePresentFormalLow("살다")).toBe("산다");
         expect(conjugation.declarativePresentFormalLow("오르다")).toBe("오른다");
     });
 
@@ -193,9 +193,9 @@ describe("declarative present ", () => {
         expect(conjugation.declarativePresentFormalHigh("가다")).toBe("갑니다");
         expect(conjugation.declarativePresentFormalHigh("좋다")).toBe("좋습니다");
         expect(conjugation.declarativePresentFormalHigh("믿다")).toBe("믿습니다");
-        expect(conjugation.declarativePresentFormalHigh("걸다").toString()).toBe("겁니다");
+        expect(conjugation.declarativePresentFormalHigh("걸다")).toBe("겁니다");
         expect(conjugation.declarativePresentFormalHigh("깨닫다")).toBe("깨닫습니다");
-        expect(conjugation.declarativePresentFormalHigh("알다").toString()).toBe("압니다");
+        expect(conjugation.declarativePresentFormalHigh("알다")).toBe("압니다");
         expect(conjugation.declarativePresentFormalHigh("푸르다")).toBe("푸릅니다");
     });
 });
@@ -284,7 +284,7 @@ describe("inquisitive present", () => {
 
     test("formal low", () => {
         expect(conjugation.inquisitivePresentFormalLow("가다")).toBe("가니?");
-        expect(conjugation.inquisitivePresentFormalLow("알다").toString()).toBe("아니?");
+        expect(conjugation.inquisitivePresentFormalLow("알다")).toBe("아니?");
     });
 
     test("formal high", () => {
@@ -323,8 +323,8 @@ describe("imperative present", () => {
         expect(conjugation.imperativePresentInformalHigh("돕다")).toBe("도우세요");
         expect(conjugation.imperativePresentInformalHigh("걷다")).toBe("걸으세요");
         expect(conjugation.imperativePresentInformalHigh("눕다")).toBe("누우세요");
-        expect(conjugation.imperativePresentInformalHigh("살다").toString()).toBe("사세요");
-        expect(conjugation.imperativePresentInformalHigh("걸다").toString()).toBe("거세요");
+        expect(conjugation.imperativePresentInformalHigh("살다")).toBe("사세요");
+        expect(conjugation.imperativePresentInformalHigh("걸다")).toBe("거세요");
     });
 
     test("formal low", () => {
@@ -339,7 +339,7 @@ describe("imperative present", () => {
         expect(conjugation.imperativePresentFormalHigh("가다")).toBe("가십시오");
         expect(conjugation.imperativePresentFormalHigh("걷다")).toBe("걸으십시오");
         expect(conjugation.imperativePresentFormalHigh("돕다")).toBe("도우십시오");
-        expect(conjugation.imperativePresentFormalHigh("알다").toString()).toBe("아십시오");
+        expect(conjugation.imperativePresentFormalHigh("알다")).toBe("아십시오");
         expect(conjugation.imperativePresentFormalHigh("눕다")).toBe("누우십시오");
         expect(conjugation.imperativePresentFormalHigh("뵙다")).toBe("뵈십시오");
     });
@@ -360,7 +360,7 @@ describe("propositive present", () => {
 
     test("formal high", () => {
         expect(conjugation.propositivePresentFormalHigh("가")).toBe("갑시다");
-        expect(conjugation.propositivePresentFormalHigh("살").toString()).toBe("삽시다");
+        expect(conjugation.propositivePresentFormalHigh("살")).toBe("삽시다");
         expect(conjugation.propositivePresentFormalHigh("눕다")).toBe("누웁시다");
         expect(conjugation.propositivePresentFormalHigh("돕다")).toBe("도웁시다");
     });

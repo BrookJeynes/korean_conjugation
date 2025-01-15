@@ -2,9 +2,22 @@ import { Geulja, findVowelToAppend, getLead, getPadchim, getVowel, join } from "
 import { isDIrregular, isHIrregular, isLEuIrregular, isLIrregular, isPIrregular, isSIrregular } from "./irregulars.js";
 import { merge_rules } from "./merge_rules";
 
-export class Conjugation {
-    tense_rules = [];
-    reasons = [];
+interface TenseRule {
+    name: string;
+    rule: (infinitive: Infinitive, regular: boolean) => Infinitive;
+}
+
+interface Conjugation {
+    tense: string;
+    conjugation: string;
+    reasons: string[];
+}
+
+export type Infinitive = string | Geulja;
+
+export class Conjugator {
+    tense_rules: TenseRule[] = [];
+    reasons: string[] = [];
 
     constructor() {
         this.tense_rules = [
@@ -48,37 +61,42 @@ export class Conjugation {
             { name: "connective if", rule: (infinitive, regular) => this.connectiveIf(infinitive, regular) },
             { name: "connective and", rule: (infinitive, regular) => this.connectiveAnd(infinitive, regular) },
             { name: "nominal ing", rule: (infinitive, regular) => this.nominalIng(infinitive, regular) },
-
         ];
     }
 
-    perform(infinitive, regular = false) {
-        const results = [];
+    perform(infinitive: string, regular: boolean = false): Conjugation[] {
+        const results: Conjugation[] = [];
 
         for (const tense of this.tense_rules) {
             this.reasons = [];
             const conjugation = tense.rule(infinitive, regular);
-            results.push({ tense: tense.name, conjugation, reasons: this.reasons });
+            results.push({
+                tense: tense.name,
+                conjugation: conjugation.toString(),
+                reasons: this.reasons
+            });
         }
 
         return results;
     }
 
-    dropL(x, y) {
+    dropL(x: Infinitive, y: Infinitive): string {
         if (getPadchim(x[x.length - 1]) === "ᆯ") {
             this.reasons.push("drop ㄹ");
-            return [x.substring(0, x.length - 1) + join(getLead(x[x.length - 1]), getVowel(x[x.length - 1])) + y];
+            return x.substring(0, x.length - 1) + join(getLead(x[x.length - 1]), getVowel(x[x.length - 1])) + y;
         }
+        throw new Error("Not an L padchim");
     }
 
-    dropLAndBorrowPadchim(x, y) {
+    dropLAndBorrowPadchim(x: Infinitive, y: Infinitive): string {
         if (getPadchim(x[x.length - 1]) === "ᆯ") {
             this.reasons.push(`drop ${getPadchim(x[x.length - 1])} borrow padchim`);
-            return [x.substring(0, x.length - 1) + join(getLead(x[x.length - 1]), getVowel(x[x.length - 1]), getPadchim(y[0])) + y.substring(1)];
+            return x.substring(0, x.length - 1) + join(getLead(x[x.length - 1]), getVowel(x[x.length - 1]), getPadchim(y[0])) + y.substring(1);
         }
+        throw new Error("Not an L padchim");
     }
 
-    merge(x, y) {
+    merge(x: Infinitive, y: Infinitive): string {
         for (let i = 0; i < merge_rules.length; i++) {
             const rule = merge_rules[i];
             const output = rule(x, y);
@@ -87,18 +105,19 @@ export class Conjugation {
                 return output[1];
             }
         }
+        throw new Error("Unable to match on rule");
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
-    base(infinitive, _regular = false) {
-        if (`${infinitive}`.endsWith("다")) {
+    base(infinitive: Infinitive, _regular: boolean = false): Infinitive {
+        if (infinitive.endsWith("다")) {
             return infinitive.substring(0, infinitive.split("").length - 1);
         }
 
         return infinitive;
     }
 
-    base2(infinitive, regular = false) {
+    base2(infinitive: Infinitive, regular: boolean = false): Infinitive {
         infinitive = this.base(infinitive, regular);
 
         if (infinitive === "아니") {
@@ -110,14 +129,14 @@ export class Conjugation {
         if (infinitive === "뵙") return "뵈";
         if (infinitive === "푸") return "퍼";
 
-        let new_infinitive = infinitive;
+        let new_infinitive: Infinitive | null = infinitive;
         if (isHIrregular(infinitive, regular)) {
             new_infinitive = this.merge(infinitive.substring(0, infinitive.length - 1) + join(getLead(infinitive[infinitive.length - 1]), getVowel(infinitive[infinitive.length - 1])), "이");
             this.reasons.push(`ㅎ irregular (${infinitive} -> ${new_infinitive})`);
         } else if (isPIrregular(infinitive, regular)) {
             let new_vowel = "";
             // only some verbs get ㅗ (highly irregular)
-            if (["묻잡"].includes(infinitive) || ["돕", "곱"].includes(infinitive[infinitive.length - 1])) {
+            if (["묻잡"].includes(infinitive.toString()) || ["돕", "곱"].includes(infinitive[infinitive.length - 1])) {
                 new_vowel = "ㅗ";
             } else {
                 new_vowel = "ㅜ";
@@ -138,7 +157,7 @@ export class Conjugation {
         return new_infinitive;
     }
 
-    base3(infinitive, regular = false) {
+    base3(infinitive: Infinitive, regular: boolean = false): Infinitive {
         infinitive = this.base(infinitive, regular);
         if (infinitive === "아니") return "아니";
         if (infinitive == "푸") return "푸";
@@ -152,7 +171,7 @@ export class Conjugation {
         }
     }
 
-    declarativePresentInformalLow(infinitive, regular = false, further_use = false) {
+    declarativePresentInformalLow(infinitive: Infinitive, regular: boolean = false, further_use: boolean = false): string {
         infinitive = this.base2(infinitive, regular);
         if (!further_use && ((infinitive[infinitive.length - 1] === "이" && !(infinitive instanceof Geulja)) || infinitive === "아니")) {
             this.reasons.push("야 irregular");
@@ -187,7 +206,7 @@ export class Conjugation {
         return this.merge(infinitive, findVowelToAppend(infinitive));
     }
 
-    declarativePresentInformalHigh(infinitive, regular = false) {
+    declarativePresentInformalHigh(infinitive: Infinitive, regular: boolean = false): Infinitive {
         infinitive = this.base2(infinitive, regular);
         if ((infinitive[infinitive.length - 1] === "이" && !(infinitive instanceof Geulja)) || infinitive === "아니") {
             this.reasons.push("에요 irregular");
@@ -196,21 +215,21 @@ export class Conjugation {
         return this.merge(this.declarativePresentInformalLow(infinitive, regular, true), "요");
     }
 
-    declarativePresentFormalLow(infinitive, regular = false) {
+    declarativePresentFormalLow(infinitive: Infinitive, regular: boolean = false): Infinitive {
         if (isLIrregular(this.base(infinitive), regular)) {
             return this.dropLAndBorrowPadchim(this.base(infinitive, regular), "는다");
         }
         return this.merge(this.base(infinitive, regular), "는다");
     }
 
-    declarativePresentFormalHigh(infinitive, regular = false) {
+    declarativePresentFormalHigh(infinitive: Infinitive, regular: boolean = false): Infinitive {
         if (isLIrregular(this.base(infinitive), regular)) {
             return this.dropLAndBorrowPadchim(this.base(infinitive, regular), "습니다");
         }
         return this.merge(this.base(infinitive, regular), "습니다");
     }
 
-    pastBase(infinitive, regular = false) {
+    pastBase(infinitive: Infinitive, regular: boolean = false): Infinitive {
         const ps = this.declarativePresentInformalLow(infinitive, regular, true);
         if (findVowelToAppend(ps) == "아") {
             return this.merge(ps, "았");
@@ -218,71 +237,71 @@ export class Conjugation {
         return this.merge(ps, "었");
     }
 
-    declarativePastInformalLow(infinitive, regular = false) {
+    declarativePastInformalLow(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.pastBase(infinitive, regular), "어");
     }
 
-    declarativePastInformalHigh(infinitive, regular = false) {
+    declarativePastInformalHigh(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.declarativePastInformalLow(infinitive, regular), "요");
     }
 
-    declarativePastFormalLow(infinitive, regular = false) {
+    declarativePastFormalLow(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.pastBase(infinitive, regular), "다");
     }
 
-    declarativePastFormalHigh(infinitive, regular = false) {
+    declarativePastFormalHigh(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.pastBase(infinitive, regular), "습니다");
     }
 
-    futureBase(infinitive, regular = false) {
+    futureBase(infinitive: Infinitive, regular: boolean = false): Infinitive {
         if (isLIrregular(this.base(infinitive, regular))) {
             return this.dropLAndBorrowPadchim(this.base3(infinitive, regular), "을");
         }
         return this.merge(this.base3(infinitive, regular), "을");
     }
 
-    declarativeFutureInformalLow(infinitive, regular = false) {
+    declarativeFutureInformalLow(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.futureBase(infinitive, regular), " 거야");
     }
 
-    declarativeFutureInformalHigh(infinitive, regular = false) {
+    declarativeFutureInformalHigh(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.futureBase(infinitive, regular), " 거예요");
     }
 
-    declarativeFutureFormalLow(infinitive, regular = false) {
+    declarativeFutureFormalLow(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.futureBase(infinitive, regular), " 거다");
     }
 
-    declarativeFutureFormalHigh(infinitive, regular = false) {
+    declarativeFutureFormalHigh(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.futureBase(infinitive, regular), " 겁니다");
     }
 
-    declarativeFutureConditionalInformalLow(infinitive, regular = false) {
+    declarativeFutureConditionalInformalLow(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.base(infinitive, regular), "겠어");
     }
 
-    declarativeFutureConditionalInformalHigh(infinitive, regular = false) {
+    declarativeFutureConditionalInformalHigh(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.base(infinitive, regular), "겠어요");
     }
 
-    declarativeFutureConditionalFormalLow(infinitive, regular = false) {
+    declarativeFutureConditionalFormalLow(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.base(infinitive, regular), "겠다");
     }
 
-    declarativeFutureConditionalFormalHigh(infinitive, regular = false) {
+    declarativeFutureConditionalFormalHigh(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.base(infinitive, regular), "겠습니다");
     }
 
-    inquisitivePresentInformalLow(infinitive, regular = false) {
+    inquisitivePresentInformalLow(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.declarativePresentInformalLow(infinitive, regular), "?");
     }
 
 
-    inquisitivePresentInformalHigh(infinitive, regular = false) {
+    inquisitivePresentInformalHigh(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.declarativePresentInformalHigh(infinitive, regular), "?");
     }
 
-    inquisitivePresentFormalLow(infinitive, regular = false) {
+    inquisitivePresentFormalLow(infinitive: Infinitive, regular: boolean = false): Infinitive {
         infinitive = this.base(infinitive, regular);
         if (isLIrregular(infinitive, regular)) {
             return this.dropL(infinitive, "니?");
@@ -290,7 +309,7 @@ export class Conjugation {
         return this.merge(infinitive, "니?");
     }
 
-    inquisitivePresentFormalHigh(infinitive, regular = false) {
+    inquisitivePresentFormalHigh(infinitive: Infinitive, regular: boolean = false): Infinitive {
         infinitive = this.base(infinitive, regular);
         if (isLIrregular(infinitive, regular)) {
             return this.dropLAndBorrowPadchim(infinitive, "습니까?");
@@ -298,57 +317,57 @@ export class Conjugation {
         return this.merge(infinitive, "습니까?");
     }
 
-    inquisitivePastInformalLow(infinitive, regular = false) {
+    inquisitivePastInformalLow(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.declarativePastInformalLow(infinitive, regular) + "?";
     }
 
-    inquisitivePastInformalHigh(infinitive, regular = false) {
+    inquisitivePastInformalHigh(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.declarativePastInformalHigh(infinitive, regular), "?");
     }
 
-    inquisitivePastFormalLow(infinitive, regular = false) {
+    inquisitivePastFormalLow(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.pastBase(infinitive, regular), "니?");
     }
 
-    inquisitivePastFormalHigh(infinitive, regular = false) {
+    inquisitivePastFormalHigh(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.pastBase(infinitive, regular), "습니까?");
     }
 
-    imperativePresentInformalLow(infinitive, regular = false) {
+    imperativePresentInformalLow(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.declarativePresentInformalLow(infinitive, regular);
     }
 
-    imperativePresentInformalHigh(infinitive, regular = false) {
+    imperativePresentInformalHigh(infinitive: Infinitive, regular: boolean = false): Infinitive {
         if (isLIrregular(this.base(infinitive, regular))) {
             return this.dropL(this.base3(infinitive, regular), "세요");
         }
         return this.merge(this.base3(infinitive, regular), "세요");
     }
 
-    imperativePresentFormalLow(infinitive, regular = false) {
+    imperativePresentFormalLow(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.imperativePresentInformalLow(infinitive, regular), "라");
     }
 
-    imperativePresentFormalHigh(infinitive, regular = false) {
+    imperativePresentFormalHigh(infinitive: Infinitive, regular: boolean = false): Infinitive {
         if (isLIrregular(this.base(infinitive, regular))) {
             return this.dropL(this.base3(infinitive, regular), "십시오");
         }
         return this.merge(this.base3(infinitive, regular), "십시오");
     }
 
-    propositivePresentInformalLow(infinitive, regular = false) {
+    propositivePresentInformalLow(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.declarativePresentInformalLow(infinitive, regular);
     }
 
-    propositivePresentInformalHigh(infinitive, regular = false) {
+    propositivePresentInformalHigh(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.declarativePresentInformalHigh(infinitive, regular);
     }
 
-    propositivePresentFormalLow(infinitive, regular = false) {
+    propositivePresentFormalLow(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.base(infinitive, regular), "자");
     }
 
-    propositivePresentFormalHigh(infinitive, regular = false) {
+    propositivePresentFormalHigh(infinitive: Infinitive, regular: boolean = false): Infinitive {
         infinitive = this.base(infinitive);
         if (isLIrregular(infinitive, regular)) {
             return this.dropLAndBorrowPadchim(this.base3(infinitive, regular), "읍시다");
@@ -356,16 +375,16 @@ export class Conjugation {
         return this.merge(this.base3(infinitive, regular), "읍시다");
     }
 
-    connectiveIf(infinitive, regular = false) {
+    connectiveIf(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.base3(infinitive, regular), "면");
     }
 
-    connectiveAnd(infinitive, regular = false) {
+    connectiveAnd(infinitive: Infinitive, regular: boolean = false): Infinitive {
         infinitive = this.base(infinitive, regular);
         return this.merge(this.base(infinitive, regular), "고");
     }
 
-    nominalIng(infinitive, regular = false) {
+    nominalIng(infinitive: Infinitive, regular: boolean = false): Infinitive {
         return this.merge(this.base3(infinitive, regular), "음");
     }
 }

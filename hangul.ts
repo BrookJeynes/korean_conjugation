@@ -6,6 +6,8 @@
  * future reference.
 */
 
+import { Infinitive } from "./conjugator";
+
 export const hangulUnicodeRange = {
     lower: 0xAC00,
     upper: 0xD7A3,
@@ -23,17 +25,19 @@ const hangulEmptyConsonant = 0x11A7;
  * markers for the last character only.
  */
 export class Geulja {
-    value = "";
-    hidden_padchim = false;
-    original_padchim = null;
+    value: string = "";
+    length: number = 0;
+    hidden_padchim: boolean = false;
+    original_padchim: string | null = null;
 
-    constructor(value) {
+    constructor(value: string) {
         this.value = value;
+        this.length = value.length;
         return new Proxy(this, {
             get: (obj, key) => {
                 if (typeof (key) === "string" && (Number.isInteger(Number(key)))) {
                     const index = Number(key);
-                    if (key < 0 || index >= obj.value.length) {
+                    if (index < 0 || index >= obj.value.length) {
                         return undefined;
                     }
                     return obj.getItem(index);
@@ -44,14 +48,34 @@ export class Geulja {
         });
     }
 
-    toString() {
+    toString(): string {
         return this.value;
     }
 
-    getItem(index) {
+    slice(start?: number, end?: number): string {
+        return this.value.slice(start, end);
+    }
+
+    substring(start: number, end?: number): string {
+        return this.value.substring(start, end);
+    }
+
+    split(separator: string | RegExp, limit?: number): string[] {
+        return this.value.split(separator, limit);
+    }
+
+    endsWith(searchString: string): boolean {
+        return this.value.endsWith(searchString);
+    }
+
+    startsWith(searchString: string, position?: number): boolean {
+        return this.value.startsWith(searchString, position);
+    }
+
+    getItem(index: number): Geulja {
         const geulja = new Geulja(this.value.charAt(index));
         // Only keep the hidden padchim marker for the last item.
-        if (index === this.length - 1) {
+        if (index === this.value.length - 1) {
             geulja.hidden_padchim = this.hidden_padchim;
             geulja.original_padchim = this.original_padchim;
         }
@@ -60,14 +84,7 @@ export class Geulja {
     }
 }
 
-/**
- * Determines whether a character is hangul or not.
- *
- * @param {string} character
- * @returns {bool}
- * @throws When the input is not of length 1.
- */
-export function isHangul(character) {
+export function isHangul(character: string): boolean {
     if (character.length !== 1) {
         throw new Error("isHangeul only checks characters with a length of 1");
     }
@@ -77,8 +94,8 @@ export function isHangul(character) {
 }
 
 
-export function findVowelToAppend(str) {
-    const reversed = [...`${str}`].reverse();
+export function findVowelToAppend(geulja: Infinitive): string {
+    const reversed = [...`${geulja}`].reverse();
 
     for (const char of reversed) {
         if (["뜨", "쓰", "트"].includes(char)) {
@@ -101,13 +118,8 @@ export function findVowelToAppend(str) {
 
 /**
  * Assembly a set of Jamo characters.
- *
- * @param {string} lead
- * @param {string} vowel
- * @param {string | null} padchim
- * @returns {string} The geulja resulting from the assembly.
  */
-export function join(lead, vowel, padchim = null) {
+export function join(lead: string, vowel: string, padchim: string | null = null): string {
     const lead_offset = lead.charCodeAt(0) - hangulLeadUnicodeOffset;
     const vowel_offset = vowel.charCodeAt(0) - hangulVowelUnicodeOffset;
     const padchim_offset = padchim ? padchim.charCodeAt(0) - hangulTailUnicodeOffset : -1;
@@ -117,30 +129,16 @@ export function join(lead, vowel, padchim = null) {
     );
 }
 
-/**
- * Get the consonant of a geulja.
- *
- * @param {string} geulja
- * @returns {string} The consonant of the provided geulja.
- */
-export function getLead(geulja) {
+export function getLead(geulja: string): string {
     const character_code = `${geulja}`.charCodeAt(0);
     const relative_lead_code = Math.floor((character_code - hangulUnicodeRange.lower) / 588);
     const lead_code = (relative_lead_code + hangulLeadUnicodeOffset);
     return String.fromCharCode(lead_code);
 }
 
-/**
- * Get the vowel of a geulja.
- *
- * @param {string} geulja
- * @returns {string} The vowel of the provided geulja.
- */
-export function getVowel(geulja) {
-    // getPadchim() returns a character or True if there is a hidden padchim, 
-    // but a hidden padchim doesn't make sense for this offset
+export function getVowel(geulja: string): string {
     const padchim = getPadchim(geulja);
-    const padchim_offset = padchim === true || padchim === null ? -1 : padchim.charCodeAt(0) - hangulTailUnicodeOffset;
+    const padchim_offset = padchim === null ? -1 : padchim.charCodeAt(0) - hangulTailUnicodeOffset;
 
     const character_code = `${geulja}`.charCodeAt(0);
     const relative_vowel_code = Math.floor(((character_code - hangulUnicodeRange.lower - padchim_offset) % 588) / 28);
@@ -150,15 +148,15 @@ export function getVowel(geulja) {
     return vowel;
 }
 
-/**
- * Get the padchim of a geulja.
- *
- * @param {string} geulja
- * @returns {string | null} The padchim of the provided geulja.
- */
-export function getPadchim(geulja) {
+export function hasHiddenPadchim(geulja: Infinitive): boolean {
     if (geulja instanceof Geulja) {
         if (geulja.hidden_padchim) return true;
+    }
+    return false;
+}
+
+export function getPadchim(geulja: Infinitive): string | null {
+    if (geulja instanceof Geulja) {
         if (geulja.original_padchim) return geulja.original_padchim;
     }
 
@@ -170,19 +168,15 @@ export function getPadchim(geulja) {
     return tail_code === hangulEmptyConsonant ? null : padchim;
 }
 
-/**
- * Determine whether a geulja matches a pattern.
- *
- * @param {string} geulja
- * @param {string | undefined} lead The lead patterm. Leaving undefined represents any pattern.
- * @param {string | undefined} vowel The vowel patterm. Leaving undefined represents any pattern.
- * @param {string | null | undefined} padchim The padchim patterm. Leaving undefined represents any pattern.
- * @returns {bool}
- */
-export function matchGeulja(geulja, lead = undefined, vowel = undefined, padchim = undefined) {
+export function matchGeulja(
+    geulja: string,
+    lead: string | undefined = undefined,
+    vowel: string | undefined = undefined,
+    padchim: string | null | undefined = undefined
+): boolean {
     const matchesLead = lead !== undefined ? getLead(geulja) === lead : true;
     const matchesVowel = vowel !== undefined ? getVowel(geulja) === vowel : true;
-    const matchesPadchim = padchim !== undefined ? getPadchim(geulja) === padchim : true;
+    const matchesPadchim = padchim !== undefined ? (hasHiddenPadchim(geulja) || getPadchim(geulja)) === padchim : true;
 
     return matchesLead && matchesVowel && matchesPadchim;
 }
