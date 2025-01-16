@@ -7,7 +7,7 @@ interface TenseRule {
     rule: (infinitive: Infinitive, regular: boolean) => Infinitive;
 }
 
-interface Conjugation {
+export export interface Conjugation {
     tense: string;
     conjugation: string;
     reasons: string[];
