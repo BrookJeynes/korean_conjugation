@@ -1,3 +1,10 @@
+// This TypeScript implementation is based on the Python project ["korean_conjugation" by Dan Bravender (2010).
+// Original Python code licensed under AGPL-3.0: https://www.gnu.org/licenses/agpl-3.0.html
+// Original Python code available here: https://github.com/max-christian/korean_conjugation/blob/master/korean/conjugator.py
+// 
+// Modified and re-implemented in TypeScript by Brook Jeynes in 2025.
+// License: AGPL-3.0
+
 import { Geulja, findVowelToAppend, getLead, getPadchim, getVowel, join } from "./hangul";
 import { isDIrregular, isHIrregular, isLEuIrregular, isLIrregular, isPIrregular, isSIrregular } from "./irregulars.js";
 import { merge_rules } from "./merge_rules";
